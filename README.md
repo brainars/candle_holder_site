@@ -1,4 +1,4 @@
-# Resin Jewelry Collection – Video Background v8
+# Candleholder web
 
 ## Setup
 1. Unzip package.
