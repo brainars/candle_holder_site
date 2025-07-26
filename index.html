@@ -189,60 +189,57 @@ cartModal.style.display = 'none';
 </script>
 <script>
 function generateInvoice() {
-  // 1. Gather items from the cart
+  // 1) Build the same `items`, `subtotal`, `vat`, `total` & `dateStr` as before…
   const items = cart.map(i => ({
     title: i.title,
-    price: parseFloat(i.price.replace(/[^0-9.]/g, '')) || 0
+    price: parseFloat(i.price.replace(/[^0-9.]/g,'')) || 0
   }));
-
-  // 2. Compute sums
-  let subtotal = items.reduce((sum, i) => sum + i.price, 0);
+  let subtotal = items.reduce((sum,i) => sum + i.price, 0);
   let vat      = subtotal * 0.21;
   let total    = subtotal + vat;
-
-  // 3. Date and buyer info
   const now     = new Date();
   const dateStr = now.toLocaleDateString();
+
   const { first, last, email, phone } = buyerData;
 
-  // 4. Build HTML
+  // 2) Build your invoice HTML:
   const html = `
-    <html><head><title>Invoice</title>
-      <style>
-        body { font-family: sans-serif; padding: 2rem; }
-        table { width:100%; border-collapse:collapse; margin-bottom:1rem; }
-        th,td{border:1px solid #ccc; padding:0.5rem;}
-        th{background:#f4f4f4;} tfoot td{font-weight:bold;}
-      </style>
-    </head><body>
-      <h1>Invoice</h1>
-      <p><strong>Date:</strong> ${dateStr}</p>
-      <h3>Bill To:</h3>
-      <p>
-        ${first} ${last}<br>
-        Email: ${email}<br>
-        Mobile: ${phone}
-      </p>
-      <table>
-        <thead><tr><th>Item</th><th>Price (€)</th></tr></thead>
-        <tbody>
-          ${items.map(i=>`<tr><td>${i.title}</td><td>${i.price.toFixed(2)}</td></tr>`).join('')}
-        </tbody>
-        <tfoot>
-          <tr><td>Subtotal</td><td>${subtotal.toFixed(2)}</td></tr>
-          <tr><td>VAT (21%)</td><td>${vat.toFixed(2)}</td></tr>
-          <tr><td>Total</td><td>${total.toFixed(2)}</td></tr>
-        </tfoot>
-      </table>
-      <button onclick="window.print()">Print or Save PDF</button>
-    </body></html>
-  `;
+  <html><head><title>Invoice</title>
+    <style>
+      body{font-family:sans-serif;padding:2rem;}
+      table{width:100%;border-collapse:collapse;margin-bottom:1rem;}
+      th,td{border:1px solid #ccc;padding:0.5rem;}
+      th{background:#f4f4f4;} tfoot td{font-weight:bold;}
+    </style>
+  </head><body>
+    <h1>Invoice</h1>
+    <p><strong>Date:</strong> ${dateStr}</p>
+    <h3>Bill To:</h3>
+    <p>${first} ${last}<br>Email: ${email}<br>Mobile: ${phone}</p>
+    <table>
+      <thead><tr><th>Item</th><th>Price (€)</th></tr></thead>
+      <tbody>
+        ${items.map(i => `<tr><td>${i.title}</td><td>${i.price.toFixed(2)}</td></tr>`).join('')}
+      </tbody>
+      <tfoot>
+        <tr><td>Subtotal</td><td>${subtotal.toFixed(2)}</td></tr>
+        <tr><td>VAT (21%)</td><td>${vat.toFixed(2)}</td></tr>
+        <tr><td>Total</td><td>${total.toFixed(2)}</td></tr>
+      </tfoot>
+    </table>
+    <button onclick="window.print()">Print or Save PDF</button>
+  </body></html>`;
 
-  // 5. Open it
-  const win = window.open('', '_blank');
-  win.document.write(html);
-  win.document.close();
-
+  // 3) Try to open a new tab; if blocked, replace this page
+  const newWin = window.open('', '_blank');
+  if (newWin) {
+    newWin.document.write(html);
+    newWin.document.close();
+  } else {
+    document.open();
+    document.write(html);
+    document.close();
+  }
 }
 
 
