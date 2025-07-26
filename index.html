@@ -104,6 +104,31 @@
   closeBtn.addEventListener('click', () => modal.style.display = 'none');
   window.addEventListener('click', e => { if (e.target === modal) modal.style.display = 'none'; });
 </script>
+<div id="buyer-modal" class="buyer-modal">
+  <div class="buyer-modal-content">
+    <span class="buyer-close">&times;</span>
+    <h2>Enter Your Details</h2>
+    <form id="buyer-form">
+      <label>
+        First Name:<br>
+        <input type="text" id="buyer-first" required>
+      </label><br><br>
+      <label>
+        Last Name:<br>
+        <input type="text" id="buyer-last" required>
+      </label><br><br>
+      <label>
+        Email:<br>
+        <input type="email" id="buyer-email" required>
+      </label><br><br>
+      <label>
+        Mobile Number:<br>
+        <input type="tel" id="buyer-phone" required>
+      </label><br><br>
+      <button type="submit" class="btn">Continue to Invoice</button>
+    </form>
+  </div>
+</div>
 <div class="cart-modal" id="cart-modal">
 <div class="cart-modal-content">
 <span class="cart-close">×</span>
@@ -112,6 +137,7 @@
 <p id="cart-subtotal">Subtotal: €0.00</p>
 <p id="cart-vat">VAT (21%): €0.00</p>
 <p id="cart-total">Total: €0.00</p>
+<button id="generate-invoice" class="btn">Generate Invoice</button>
 </div>
 </div><script>
 const cartIcon    = document.getElementById('cart-icon');
@@ -160,5 +186,99 @@ cartClose.addEventListener('click', () => { cartModal.style.display = 'none'; })
 window.addEventListener('click', e => { if(e.target === cartModal) cartModal.style.display = 'none'; });
 
 cartModal.style.display = 'none';
-</script></body>
+</script>
+<script>
+function generateInvoice() {
+  // 1. Gather items from the cart
+  const items = cart.map(i => ({
+    title: i.title,
+    price: parseFloat(i.price.replace(/[^0-9.]/g, '')) || 0
+  }));
+
+  // 2. Compute sums
+  let subtotal = items.reduce((sum, i) => sum + i.price, 0);
+  let vat      = subtotal * 0.21;
+  let total    = subtotal + vat;
+
+  // 3. Date and buyer info
+  const now     = new Date();
+  const dateStr = now.toLocaleDateString();
+  const { first, last, email, phone } = buyerData;
+
+  // 4. Build HTML
+  const html = `
+    <html><head><title>Invoice</title>
+      <style>
+        body { font-family: sans-serif; padding: 2rem; }
+        table { width:100%; border-collapse:collapse; margin-bottom:1rem; }
+        th,td{border:1px solid #ccc; padding:0.5rem;}
+        th{background:#f4f4f4;} tfoot td{font-weight:bold;}
+      </style>
+    </head><body>
+      <h1>Invoice</h1>
+      <p><strong>Date:</strong> ${dateStr}</p>
+      <h3>Bill To:</h3>
+      <p>
+        ${first} ${last}<br>
+        Email: ${email}<br>
+        Mobile: ${phone}
+      </p>
+      <table>
+        <thead><tr><th>Item</th><th>Price (€)</th></tr></thead>
+        <tbody>
+          ${items.map(i=>`<tr><td>${i.title}</td><td>${i.price.toFixed(2)}</td></tr>`).join('')}
+        </tbody>
+        <tfoot>
+          <tr><td>Subtotal</td><td>${subtotal.toFixed(2)}</td></tr>
+          <tr><td>VAT (21%)</td><td>${vat.toFixed(2)}</td></tr>
+          <tr><td>Total</td><td>${total.toFixed(2)}</td></tr>
+        </tfoot>
+      </table>
+      <button onclick="window.print()">Print or Save PDF</button>
+    </body></html>
+  `;
+
+  // 5. Open it
+  const win = window.open('', '_blank');
+  win.document.write(html);
+  win.document.close();
+
+}
+
+
+// --- Buyer Info Modal Logic ---
+const buyerModal = document.getElementById('buyer-modal');
+const buyerClose = document.querySelector('.buyer-close');
+const buyerForm  = document.getElementById('buyer-form');
+let buyerData    = {};
+
+// Show the buyer form
+document.getElementById('generate-invoice').addEventListener('click', () => {
+  buyerModal.style.display = 'flex';
+});
+
+// Close handlers
+buyerClose.addEventListener('click', () => buyerModal.style.display = 'none');
+window.addEventListener('click', e => {
+  if (e.target === buyerModal) buyerModal.style.display = 'none';
+});
+
+// On form submit: capture fields, hide modal, then generate invoice
+buyerForm.addEventListener('submit', e => {
+  e.preventDefault();
+  buyerData = {
+    first:  document.getElementById('buyer-first').value,
+    last:   document.getElementById('buyer-last').value,
+    email:  document.getElementById('buyer-email').value,
+    phone:  document.getElementById('buyer-phone').value
+  };
+  buyerModal.style.display = 'none';
+
+  // *** NEW: actually generate ***
+  generateInvoice();
+});
+
+</script>
+
+</body>
 </html>
